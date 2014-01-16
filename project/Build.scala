@@ -66,7 +66,7 @@ object Scrooge extends Build {
   val sharedSettings = Seq(
     version := libVersion,
     organization := "com.twitter",
-    crossScalaVersions := Seq("2.9.2", "2.10.0"),
+    crossScalaVersions := Seq("2.9.2", "2.10.3"),
 
     resolvers ++= Seq(
       "sonatype-public" at "https://oss.sonatype.org/content/groups/public"
@@ -92,7 +92,7 @@ object Scrooge extends Build {
     // Sonatype publishing
     publishArtifact in Test := false,
     pomIncludeRepository := { _ => false },
-    publishMavenStyle := true,
+    publishMavenStyle := false,
     pomExtra := (
       <url>https://github.com/twitter/scrooge</url>
       <licenses>
@@ -113,11 +113,17 @@ object Scrooge extends Build {
         </developer>
       </developers>),
     publishTo <<= version { (v: String) =>
-      val nexus = "https://oss.sonatype.org/"
-      if (v.trim.endsWith("SNAPSHOT"))
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+      val artifactory = "http://svcmavenrepo01.endor.gutefrage.net/artifactory/"
+      val repoPattern = Patterns("[organisation]/[module]/scala_[scalaVersion]/sbt_[sbtVersion]/[revision]/[type]s/[artifact].[ext]")
+      if (v.trim.endsWith("SNAPSHOT")) {
+        val repoUrl = new URL(artifactory + "ivy-plugins-snapshot-local/")
+        val reso = Resolver.url("gutefrage-scrooge-snapshot",repoUrl)( repoPattern )
+        Some(reso)
+      } else {
+        val repoUrl = new URL(artifactory + "ivy-plugins-release-local/")
+        val reso = Resolver.url("gutefrage-scrooge-release",repoUrl)( repoPattern )
+        Some(reso)
+      }
     },
 
     resourceGenerators in Compile <+=
@@ -170,7 +176,7 @@ object Scrooge extends Build {
       "org.apache.thrift" % "libthrift" % "0.8.0",
       "com.github.scopt" %% "scopt" % "2.1.0",
       "com.novocode" % "junit-interface" % "0.8" % "test->default",
-      "com.github.spullara.mustache.java" % "compiler" % "0.8.12",
+      "com.github.spullara.mustache.java" % "compiler" % "0.8.13",
       "org.codehaus.plexus" % "plexus-utils" % "1.5.4",
       "com.google.code.findbugs" % "jsr305" % "1.3.9",
       "commons-cli" % "commons-cli" % "1.2",
